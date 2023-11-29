@@ -9,36 +9,32 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.attributes.Attribute;
+import org.gradle.api.provider.Property;
 import org.gradle.api.publish.maven.MavenPublication;
 
 import javax.inject.Inject;
 import java.util.Optional;
 
-public class JarJarExtension implements net.neoforged.gradle.dsl.userdev.extension.JarJar {
+public abstract class JarJarExtension implements net.neoforged.gradle.dsl.userdev.extension.JarJar {
 
     private final Attribute<String> fixedJarJarVersionAttribute = Attribute.of("fixedJarJarVersion", String.class);
     private final Attribute<String> jarJarRangeAttribute = Attribute.of("jarJarRange", String.class);
 
     private final Project project;
-    private boolean disabled;
     private boolean disableDefaultSources;
 
     @Inject
     public JarJarExtension(final Project project) {
         this.project = project;
+        getEnabled().convention(false);
     }
 
     @Override
-    public void enable() {
-        if (!this.disabled)
-            enable(true);
-    }
+    public abstract Property<Boolean> getEnabled();
 
-    private void enable(boolean enabled) {
-        final Task task = project.getTasks().findByPath("jarJar");
-        if (task != null) {
-            task.setEnabled(enabled);
-        }
+    @Override
+    public void enable() {
+        disable(false);
     }
 
     @Override
@@ -48,10 +44,7 @@ public class JarJarExtension implements net.neoforged.gradle.dsl.userdev.extensi
 
     @Override
     public void disable(boolean disable) {
-        this.disabled = disable;
-        if (disable) {
-            enable(false);
-        }
+        getEnabled().set(!disable);
     }
 
     @Override

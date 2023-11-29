@@ -11,7 +11,10 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Jar;
+import org.gradle.language.base.plugins.LifecycleBasePlugin;
 
 public class UserDevProjectPlugin implements Plugin<Project> {
     public static final String JAR_JAR_TASK_NAME = "jarJar";
@@ -39,7 +42,7 @@ public class UserDevProjectPlugin implements Plugin<Project> {
 
         JavaPluginExtension javaPluginExtension = project.getExtensions().getByType(JavaPluginExtension.class);
 
-        project.getTasks().register(JAR_JAR_TASK_NAME, net.neoforged.gradle.userdev.tasks.JarJar.class, jarJar -> {
+        TaskProvider<net.neoforged.gradle.userdev.tasks.JarJar> task = project.getTasks().register(JAR_JAR_TASK_NAME, net.neoforged.gradle.userdev.tasks.JarJar.class, jarJar -> {
             jarJar.setGroup(JAR_JAR_GROUP);
             jarJar.setDescription("Create a combined JAR of project and selected dependencies");
             jarJar.getArchiveClassifier().convention("all");
@@ -51,9 +54,15 @@ public class UserDevProjectPlugin implements Plugin<Project> {
 
             jarJar.configuration(configuration);
 
-            jarJar.setEnabled(false);
+            Property<Boolean> enableProperty = jarJarExtension.getEnabled();
+            jarJar.onlyIf(t -> enableProperty.get());
         });
 
-        project.getArtifacts().add(JAR_JAR_DEFAULT_CONFIGURATION_NAME, project.getTasks().named(JAR_JAR_TASK_NAME));
+        // Add `jarJar` dependency on `assemble`
+        project.getTasks().named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, t -> {
+            t.dependsOn(JAR_JAR_TASK_NAME);
+        });
+
+        project.getArtifacts().add(JAR_JAR_DEFAULT_CONFIGURATION_NAME, task);
     }
 }

@@ -4,11 +4,14 @@ import net.neoforged.gradle.dsl.userdev.dependency.DependencyFilter
 import net.neoforged.gradle.dsl.userdev.dependency.DependencyVersionInformationHandler
 import org.gradle.api.Action
 import org.gradle.api.artifacts.Dependency
+import org.gradle.api.provider.Property
 import org.gradle.api.publish.maven.MavenPublication
 
 interface JarJar {
 
     String EXTENSION_NAME = "jarJar";
+
+    Property<Boolean> getEnabled();
 
     void enable();
 
